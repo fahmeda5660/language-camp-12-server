@@ -71,6 +71,15 @@ async function run() {
       }
       next();
     }
+     const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
     // User related apis
     app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
@@ -148,16 +157,46 @@ async function run() {
       res.send(result);
 
     })
+    
     // class
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     })
-    app.post('/class',verifyJWT,verifyAdmin, async (req, res) => {
+    app.post('/class',verifyJWT, verifyInstructor, async (req, res) => {
       const newItem = req.body;
       const result = await classCollection.insertOne(newItem)
       res.send(result);
+    }) 
+    app.delete('/class/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await classCollection.deleteOne(query);
+      res.send(result);
     })
+    // class -- patch
+    app.patch('/classes/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        },
+      };
+      
+      const result = await classCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+
+    })
+    //  classes
+    app.get("/AllClasses", async (req, res) => {
+      const result = await classCollection
+        .find({ status: "approved" })
+        .toArray();
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
