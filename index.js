@@ -53,6 +53,7 @@ async function run() {
     });
 
     const usersCollection = client.db("languageDb").collection("users");
+    const classCollection = client.db("languageDb").collection("class");
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -146,6 +147,16 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
 
+    })
+    // class
+    app.get('/class', async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    })
+    app.post('/class',verifyJWT,verifyAdmin, async (req, res) => {
+      const newItem = req.body;
+      const result = await classCollection.insertOne(newItem)
+      res.send(result);
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
