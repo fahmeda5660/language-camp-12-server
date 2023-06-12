@@ -54,6 +54,7 @@ async function run() {
 
     const usersCollection = client.db("languageDb").collection("users");
     const classCollection = client.db("languageDb").collection("class");
+    const cartCollection = client.db("languageDb").collection("carts");
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -61,8 +62,8 @@ async function run() {
 
       res.send({ token })
     })
-     // Warning: use verifyJWT before using verifyAdmin
-     const verifyAdmin = async (req, res, next) => {
+    // Warning: use verifyJWT before using verifyAdmin
+    const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
       const user = await usersCollection.findOne(query);
@@ -71,7 +72,7 @@ async function run() {
       }
       next();
     }
-     const verifyInstructor = async (req, res, next) => {
+    const verifyInstructor = async (req, res, next) => {
       const email = req.decoded.email;
       const query = { email: email }
       const user = await usersCollection.findOne(query);
@@ -135,7 +136,7 @@ async function run() {
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
-        res.send({ instructor: false })
+        return res.send({ instructor: false })
       }
 
       const query = { email: email }
@@ -157,17 +158,17 @@ async function run() {
       res.send(result);
 
     })
-    
+
     // class
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     })
-    app.post('/class',verifyJWT, verifyInstructor, async (req, res) => {
+    app.post('/class', verifyJWT, verifyInstructor, async (req, res) => {
       const newItem = req.body;
       const result = await classCollection.insertOne(newItem)
       res.send(result);
-    }) 
+    })
     app.delete('/class/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
@@ -185,15 +186,94 @@ async function run() {
           status: 'approved'
         },
       };
-      
+
       const result = await classCollection.updateOne(filter, updateDoc, options);
       res.send(result);
 
     })
-    //  classes
+    app.patch('/classes/admin/deny/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: 'deny'
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+
+    })
+    // approved classes
     app.get("/AllClasses", async (req, res) => {
       const result = await classCollection
         .find({ status: "approved" })
+        .toArray();
+      res.send(result);
+    });
+    // cart collection apis
+    app.get('/carts', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      if (!email) {
+        return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: 'forbidden cart access' })
+      }
+      // console.log(req.headers);
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
+    // selected class---> cart
+    app.post('/carts', async (req, res) => {
+      const item = req.body;
+      console.log(item);
+      const result = await cartCollection.insertOne(item);
+      res.send(result);
+    })
+    // My classes
+
+    app.get("/myClass/:email", async (req, res) => {
+      console.log(req.params.id);
+      const classes = await cartCollection
+        .find({
+          email: req.params.email,
+        })
+        .toArray();
+      res.send(classes);
+    });
+    app.get("/instructor", async (req, res) => {
+      console.log(req.params.id);
+      const classes = await cartCollection
+        .find({
+          role: req.params.instructor,
+        })
+        .toArray();
+      res.send(classes);
+    });
+    app.get("/popularInstructor", async (req, res) => {
+      console.log(req.params.id);
+      const classes = await cartCollection
+        .find({
+          role: req.params.instructor,
+        })
+        .limit(6)
+        .toArray();
+      res.send(classes);
+    });
+
+    // popular classes
+    app.get("/popularClasses", async (req, res) => {
+      const result = await classCollection
+        .find({ status: "approved" })
+        .sort({ enrolled: -1 })
+        .limit(6)
         .toArray();
       res.send(result);
     });
