@@ -206,13 +206,7 @@ async function run() {
       res.send(result);
 
     })
-    // approved classes
-    app.get("/AllClasses", async (req, res) => {
-      const result = await classCollection
-        .find({ status: "approved" })
-        .toArray();
-      res.send(result);
-    });
+
     // cart collection apis
     app.get('/carts', verifyJWT, async (req, res) => {
       const email = req.query.email;
@@ -248,6 +242,34 @@ async function run() {
         .toArray();
       res.send(classes);
     });
+    // instructor update 
+    // app.put("/myClass/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const body = req.body;
+
+    //   const filter = { _id: new ObjectId(id) };
+    //   const updateDoc = {
+    //     $set: {
+    //       className: body.price,
+    //     },
+    //   };
+    //   const result = await classCollection.updateOne(filter, updateDoc);
+    //   res.send(result);
+    // });
+    // app.get("/myClass/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) }
+    //   const result = await classCollection.findOne(filter)
+    //   res.send(result)
+    // });
+    // approved classes
+    app.get("/AllClasses", async (req, res) => {
+      const result = await classCollection
+        .find({ status: "approved" })
+        .toArray();
+      res.send(result);
+    });
+    // instructor
     app.get("/instructor", async (req, res) => {
       console.log(req.params.id);
       const classes = await cartCollection
@@ -257,6 +279,8 @@ async function run() {
         .toArray();
       res.send(classes);
     });
+    // popular 
+
     app.get("/popularInstructor", async (req, res) => {
       console.log(req.params.id);
       const classes = await cartCollection
