@@ -235,11 +235,8 @@ async function run() {
       if (email !== decodedEmail) {
         return res.status(403).send({ error: true, message: 'forbidden cart access' })
       }
-      // console.log(req.headers);
       const query = { email: email };
       const result = await cartCollection.find(query).toArray();
-      console.log(result);
-      console.log(email, " hdtr");
       res.send(result);
     });
 
@@ -247,7 +244,6 @@ async function run() {
     // selected class---> cart
     app.post('/carts', async (req, res) => {
       const item = req.body;
-      console.log("cart item",item);
       const result = await cartCollection.insertOne(item);
       res.send(result);
     })
@@ -269,7 +265,7 @@ async function run() {
       res.send(classes);
     });
     app.get('/payments',async (req, res) => {
-      const result = await paymentCollection.find().toArray();
+      const result = await paymentCollection.find().sort({ date: -1 }).toArray();
       res.send(result);
     });
     // instructor update 
@@ -296,6 +292,14 @@ async function run() {
     app.get("/AllClasses", async (req, res) => {
       const result = await classCollection
         .find({ status: "approved" })
+        .sort({ enrolled: -1 })
+        .toArray();
+      res.send(result);
+    });
+    app.get("/AllClasses", async (req, res) => {
+      const result = await classCollection
+        .find({ role: "approved" })
+        .sort({ enrolled: -1 })
         .toArray();
       res.send(result);
     });
@@ -351,12 +355,20 @@ async function run() {
     //payment related api
     app.post('/payments', verifyJWT, async (req, res) => {
       const payment = req.body;
+      const filter = {_id: new ObjectId(payment?.ClassId)}
+      const classItems = await classCollection.findOne(filter);
+      const enrolled = classItems.enrolled+1;
+      const availableSeat = classItems.availableSeat - 1 ;
+      const updateClassItems = {
+        $set: {enrolled,availableSeat},
+      }
       const insertResult = await paymentCollection.insertOne(payment);
 
       const query = { _id: new ObjectId(payment._id) };
       const deleteResult = await cartCollection.deleteOne(query)
 
-      res.send({ insertResult, deleteResult });
+      const updateResult = await classCollection.updateOne(filter,updateClassItems)
+      res.send({ insertResult, deleteResult, updateResult });
     })
     app.get('/payments', async (req, res) => {
       let query = {};
