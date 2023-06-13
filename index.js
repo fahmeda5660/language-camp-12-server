@@ -216,7 +216,7 @@ async function run() {
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          feedback:req.body.feedback
+          feedback: req.body.feedback
         },
       };
 
@@ -264,7 +264,7 @@ async function run() {
         .toArray();
       res.send(classes);
     });
-    app.get('/payments',async (req, res) => {
+    app.get('/payments', async (req, res) => {
       const result = await paymentCollection.find().sort({ date: -1 }).toArray();
       res.send(result);
     });
@@ -355,38 +355,38 @@ async function run() {
     //payment related api
     app.post('/payments', verifyJWT, async (req, res) => {
       const payment = req.body;
-      const filter = {_id: new ObjectId(payment?.ClassId)}
+      const filter = { _id: new ObjectId(payment?.ClassId) }
       const classItems = await classCollection.findOne(filter);
-      const enrolled = classItems.enrolled+1;
-      const availableSeat = classItems.availableSeat - 1 ;
+      const enrolled = classItems.enrolled + 1;
+      const availableSeat = classItems.availableSeat - 1;
       const updateClassItems = {
-        $set: {enrolled,availableSeat},
+        $set: { enrolled, availableSeat },
       }
       const insertResult = await paymentCollection.insertOne(payment);
 
       const query = { _id: new ObjectId(payment._id) };
       const deleteResult = await cartCollection.deleteOne(query)
 
-      const updateResult = await classCollection.updateOne(filter,updateClassItems)
+      const updateResult = await classCollection.updateOne(filter, updateClassItems)
       res.send({ insertResult, deleteResult, updateResult });
     })
     app.get('/payments', async (req, res) => {
       let query = {};
       if (req.query?.email) {
-          query = { email: req.query.email }
+        query = { email: req.query.email }
       }
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
-  });
-  //   app.post('/payments', verifyJWT, async (req, res) => {
-  //     const paymentInfo = req.body;
-  //     const insertResult = await paymentCollection.insertOne(paymentInfo);
+    });
+    //   app.post('/payments', verifyJWT, async (req, res) => {
+    //     const paymentInfo = req.body;
+    //     const insertResult = await paymentCollection.insertOne(paymentInfo);
 
-  //     const query = { _id: new ObjectId(paymentInfo._id) };
-  //     const deleteResult = await bookedClasses.deleteOne(query);
+    //     const query = { _id: new ObjectId(paymentInfo._id) };
+    //     const deleteResult = await bookedClasses.deleteOne(query);
 
-  //     res.send({ insertResult, deleteResult });
-  // });
+    //     res.send({ insertResult, deleteResult });
+    // });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
