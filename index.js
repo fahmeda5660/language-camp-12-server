@@ -56,6 +56,8 @@ async function run() {
     const usersCollection = client.db("languageDb").collection("users");
     const classCollection = client.db("languageDb").collection("class");
     const cartCollection = client.db("languageDb").collection("carts");
+    const paymentCollection = client.db("bistroDb").collection("payments");
+
     // JWT
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -207,6 +209,21 @@ async function run() {
       res.send(result);
 
     })
+    app.post('/classes/admin/feedback/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(req.body.feedback);
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          feedback:req.body.feedback
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+
+    })
 
     // cart collection apis
     app.get('/carts', verifyJWT, async (req, res) => {
@@ -242,7 +259,7 @@ async function run() {
 
     app.get("/myClass/:email", async (req, res) => {
       console.log(req.params.id);
-      const classes = await cartCollection
+      const classes = await classCollection
         .find({
           email: req.params.email,
         })
@@ -309,11 +326,11 @@ async function run() {
       res.send(result);
     });
 
-     // create payment intent
-     app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+    // create payment intent
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
-      // console.log(price, amount);
+      console.log(price, amount);
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'usd',
@@ -325,7 +342,25 @@ async function run() {
       })
     })
 
+    //payment related api
+    app.post('/payments', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
 
+      const query = { _id: { $in: payment.cartIds.map(id => new ObjectId(id)) } }
+      const deleteResult = await cartCollection.deleteOne(query)
+
+      res.send({ insertResult, deleteResult });
+    })
+
+  app.get('/payments', async (req, res) => {
+    let query = {};
+    if (req.query?.email) {
+        query = { email: req.query.email }
+    }
+    const result = await paymentCollection.find(query).toArray();
+    res.send(result);
+});
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -343,3 +378,4 @@ app.get('/', (req, res) => {
 });
 // This displays message that the server running and listening to specified port
 app.listen(port, () => console.log(`Listening on port ${port}`));
+// vercel --prod
