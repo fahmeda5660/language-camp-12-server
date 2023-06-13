@@ -247,7 +247,7 @@ async function run() {
     // selected class---> cart
     app.post('/carts', async (req, res) => {
       const item = req.body;
-      console.log(item);
+      console.log("cart item",item);
       const result = await cartCollection.insertOne(item);
       res.send(result);
     })
