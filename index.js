@@ -56,7 +56,7 @@ async function run() {
     const usersCollection = client.db("languageDb").collection("users");
     const classCollection = client.db("languageDb").collection("class");
     const cartCollection = client.db("languageDb").collection("carts");
-    const paymentCollection = client.db("bistroDb").collection("payments");
+    const paymentCollection = client.db("languageDb").collection("payments");
 
     // JWT
     app.post('/jwt', (req, res) => {
@@ -238,6 +238,8 @@ async function run() {
       // console.log(req.headers);
       const query = { email: email };
       const result = await cartCollection.find(query).toArray();
+      console.log(result);
+      console.log(email, " hdtr");
       res.send(result);
     });
 
@@ -265,6 +267,10 @@ async function run() {
         })
         .toArray();
       res.send(classes);
+    });
+    app.get('/payments',async (req, res) => {
+      const result = await paymentCollection.find().toArray();
+      res.send(result);
     });
     // instructor update 
     // app.put("/myClass/:id", async (req, res) => {
@@ -347,20 +353,28 @@ async function run() {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
 
-      const query = { _id: { $in: payment.cartIds.map(id => new ObjectId(id)) } }
+      const query = { _id: new ObjectId(payment._id) };
       const deleteResult = await cartCollection.deleteOne(query)
 
       res.send({ insertResult, deleteResult });
     })
+    app.get('/payments', async (req, res) => {
+      let query = {};
+      if (req.query?.email) {
+          query = { email: req.query.email }
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+  });
+  //   app.post('/payments', verifyJWT, async (req, res) => {
+  //     const paymentInfo = req.body;
+  //     const insertResult = await paymentCollection.insertOne(paymentInfo);
 
-  app.get('/payments', async (req, res) => {
-    let query = {};
-    if (req.query?.email) {
-        query = { email: req.query.email }
-    }
-    const result = await paymentCollection.find(query).toArray();
-    res.send(result);
-});
+  //     const query = { _id: new ObjectId(paymentInfo._id) };
+  //     const deleteResult = await bookedClasses.deleteOne(query);
+
+  //     res.send({ insertResult, deleteResult });
+  // });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
