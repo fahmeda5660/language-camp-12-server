@@ -46,12 +46,12 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // edited
-    client.connect((err) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-    });
+    // client.connect((err) => {
+    //   if (err) {
+    //     console.error(err);
+    //     return;
+    //   }
+    // });
 
     const usersCollection = client.db("languageDb").collection("users");
     const classCollection = client.db("languageDb").collection("class");
@@ -166,13 +166,7 @@ async function run() {
       res.send(result);
 
     })
-    // all instructor get
-    // app.get('/users/instructor/class/:email', verifyJWT, async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { role: instructor }
-    //   const result = await usersCollection.find(query).toArray();
-    //   res.send(result);
-    // })
+
     // class, manage classes jwt
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
@@ -286,26 +280,7 @@ async function run() {
       const result = await paymentCollection.find().sort({ date: -1 }).toArray();
       res.send(result);
     });
-    // instructor update 
-    // app.put("/myClass/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const body = req.body;
 
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updateDoc = {
-    //     $set: {
-    //       className: body.price,
-    //     },
-    //   };
-    //   const result = await classCollection.updateOne(filter, updateDoc);
-    //   res.send(result);
-    // });
-    // app.get("/myClass/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const filter = { _id: new ObjectId(id) }
-    //   const result = await classCollection.findOne(filter)
-    //   res.send(result)
-    // });
     // approved classes
     app.get("/AllClasses", async (req, res) => {
       const result = await classCollection
@@ -396,15 +371,7 @@ async function run() {
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
     });
-    //   app.post('/payments', verifyJWT, async (req, res) => {
-    //     const paymentInfo = req.body;
-    //     const insertResult = await paymentCollection.insertOne(paymentInfo);
 
-    //     const query = { _id: new ObjectId(paymentInfo._id) };
-    //     const deleteResult = await bookedClasses.deleteOne(query);
-
-    //     res.send({ insertResult, deleteResult });
-    // });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
