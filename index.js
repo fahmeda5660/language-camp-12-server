@@ -133,7 +133,12 @@ async function run() {
       res.send(result);
 
     })
-
+    app.delete('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    })
     // Instructor
     app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -161,8 +166,14 @@ async function run() {
       res.send(result);
 
     })
-
-    // class
+    // all instructor get
+    // app.get('/users/instructor/class/:email', verifyJWT, async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { role: instructor }
+    //   const result = await usersCollection.find(query).toArray();
+    //   res.send(result);
+    // })
+    // class, manage classes jwt
     app.get('/class', async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
@@ -172,7 +183,14 @@ async function run() {
       const result = await classCollection.insertOne(newItem)
       res.send(result);
     })
-    app.delete('/class/:id', async (req, res) => {
+    app.delete('/class/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await classCollection.deleteOne(query);
+      res.send(result);
+    })
+    // manage user delete
+    app.delete('users/admin/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await classCollection.deleteOne(query);
@@ -303,7 +321,7 @@ async function run() {
         .toArray();
       res.send(result);
     });
-    // instructor
+    //all instructor
     app.get("/instructor", async (req, res) => {
       console.log(req.params.id);
       const classes = await cartCollection
